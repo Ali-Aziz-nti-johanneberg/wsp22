@@ -1,0 +1,10 @@
+h1 All Albums
+
+p = rec
+ol
+  - rec.each do |recipe|
+    li 
+      a href="recipes/#{recipe['id']}" #{recipe["recipe_name"]}
+
+      
+      

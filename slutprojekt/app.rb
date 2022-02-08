@@ -12,5 +12,8 @@ def connect_to_db(path)
 end   
 
 get('/') do
-    slim(:home)
+    db = connect_to_db("db/slut_pro_jekt.db")
+    recipe_name = db.execute("SELECT * FROM recipes")
+    p "re är: #{recipe_name}"
+    slim(:home,locals:{rec:recipe_name})
 end
