@@ -27,7 +27,20 @@ post('/recipes/new') do
     ingrediens_list = params[:name_ingrediens]
     p "#{ingrediens_list} and #{recipe_name}"
     db = SQLite3::Database.new("db/db.db")
-    db.execute('INSERT INTO recipe (recipe_name) VALUE (?)',recipe_name)
+    db.execute('INSERT INTO recipe (recipe_name) VALUES (?)',recipe_name)
+    ingre_array = ingrediens_list.split(",")
+    i = 0
+    while i < ingre_array.length
+        db.execute('INSERT INTO ingredients (ingredients_name) VALUES (?)',ingre_array[i].to_s)
+        # Behöver lägga till i många till många tabel båda id för recipie och ingredienser.
+        # Hur ska man ta reda på id om den får sitt id från sql cod.
+        # Ide 1 skapa en variabler som börjar räkna från 0 ingredienser samma sak med reciept - går inte, hur ska den veta vad fär ingrediens den har?
+        #Skapa en variable som har en array av alla ingredienser tillsammans med en varibel som räknar antalet reciept. 
+        db.execute('INSERT INTO ingredients (ingredients_name) VALUES (?)',ingre_array[i].to_s)
+        db.execute('INSERT INTO ingredients (ingredients_name) VALUES (?)',ingre_array[i].to_s)
+        i += 1
+    end
+
     redirect('/')
 end
 
