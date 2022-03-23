@@ -29,17 +29,17 @@ post('/recipes/new') do
     db = SQLite3::Database.new("db/db.db")
     db.execute('INSERT INTO recipe (recipe_name) VALUES (?)',recipe_name)   
     ingre_array = ingrediens_list.split(",")
-    ingrediens_list = db.execute('SELECT ingredients_name FROM ingredients')
+    ingrediens_database = db.execute('SELECT ingredients_name FROM ingredients')
     i = 0
     while i < ingre_array.length
-        p ingrediens_list.flatten
-        p ingrediens_list.flatten.include?(ingre_array[i].to_s) 
-        if ingrediens_list.flatten.include?(ingre_array[i].to_s) == false
+        if ingrediens_database.flatten.include?(ingre_array[i].to_s) == false
             db.execute('INSERT INTO ingredients (ingredients_name) VALUES (?)',ingre_array[i].to_s)
         end
         id_ing_temp = db.execute('SELECT id FROM ingredients WHERE ingredients_name = ?',ingre_array[i].to_s)
-        #id_rec_temp = db.execute('SELECT id FROM recipe (recipe_name) VALUES (?)',recipe_name)
-        #db.execute('INSERT INTO ingredients_recipes (ingredient_id) VALUES (?) (recipe_id) VALUES (?)',id_ing_temp,id_rec_temp)
+        p id_ing_temp
+        id_rec_temp = db.execute('SELECT id FROM recipe WHERE id = (SELECT MAX(ID)  FROM recipe);')
+        p id_rec_temp
+        db.execute('INSERT INTO ingredients_recipes (ingredient_id, recipe_id) VALUES (?,?)',id_ing_temp, id_rec_temp)
         i += 1
     end
 
@@ -50,10 +50,13 @@ end
 get('/recipes/:id') do
     id = params[:id]
     db = connect_to_db("db/db.db")
-    recipe_show = db.execute("SELECT * FROM recipe WHERE id=?",id)[0]
-    p "re är: #{recipe_show}"
-    slim(:show,locals:{info:recipe_show})
-end
+    db.results_as_hash = true
+    show = db.execute("SELECT ingredient_id FROM ingredients_recipes WHERE recipe_id = ?",id)
+    i = 0
+    while i < show.length
+    temp = db.execute("SELECT ingredients_name FROM ingredients WHERE id = (SELECT ingredient_id FROM ingredients_recipes WHERE recipe_id = ?)",id)
+    slim(:show,locals:{info:show})
+endä
 
 get('/login') do
     slim(:login)
