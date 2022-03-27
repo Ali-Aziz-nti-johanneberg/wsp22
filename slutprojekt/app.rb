@@ -51,12 +51,33 @@ get('/recipes/:id') do
     id = params[:id]
     db = connect_to_db("db/db.db")
     db.results_as_hash = true
-    show = db.execute("SELECT ingredient_id FROM ingredients_recipes WHERE recipe_id = ?",id)
-    i = 0
-    while i < show.length
-    temp = db.execute("SELECT ingredients_name FROM ingredients WHERE id = (SELECT ingredient_id FROM ingredients_recipes WHERE recipe_id = ?)",id)
+    show = db.execute("SELECT ingredients_name FROM ingredients WHERE id IN (SELECT ingredient_id FROM ingredients_recipes WHERE recipe_id = ?)",id)
     slim(:show,locals:{info:show})
-endä
+end
+
+post('/recipes/:id/delete') do
+  id = params[:id].to_i
+  db = SQLite3::Database.new("db/db.db")
+  db.execute("DELETE FROM recipe WHERE id = ?",id)
+  redirect('/')
+end
+
+get('/recipes/:id/edit') do
+  id = params[:id].to_i
+  db = SQLite3::Database.new("db/db.db")
+  db.results_as_hash = true
+  result = db.execute("SELECT * FROM recpie WHERE Id = ?",id).first
+  slim(:"/albums/edit",locals:{result:result})
+end
+
+post('/recipes/:id/update') do
+  id = params[:id].to_i
+  title = params[:title]
+  artist_id = params[:ArtistId].to_i
+  db = SQLite3::Database.new("db/db.db")
+  db.execute("UPDATE albums SET Title=?,ArtistId=? WHERE AlbumId = ? ",title,artist_id,id)
+  redirect('/albums')
+end
 
 get('/login') do
     slim(:login)
