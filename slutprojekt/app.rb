@@ -15,6 +15,7 @@ get('/') do
     db = connect_to_db("db/db.db")
     recipe_name = db.execute("SELECT * FROM recipe")
     p "re är: #{recipe_name}"
+    id = session[:id].to_i
     slim(:index,locals:{rec:recipe_name})
 end
 
@@ -22,7 +23,7 @@ get('/recipes/new') do
     slim(:new)
 end
 
-post('/recipes/new') do
+post('/recipes') do
     recipe_name = params[:name_recipe]
     ingrediens_list = params[:name_ingrediens]
     p "#{ingrediens_list} and #{recipe_name}"
@@ -66,19 +67,50 @@ get('/recipes/:id/edit') do
   id = params[:id].to_i
   db = SQLite3::Database.new("db/db.db")
   db.results_as_hash = true
-  result = db.execute("SELECT * FROM recpie WHERE Id = ?",id).first
-  slim(:"/albums/edit",locals:{result:result})
+  result = db.execute("SELECT * FROM recipe WHERE Id = ?",id).first
+  slim(:"edit",locals:{result:result})
 end
 
 post('/recipes/:id/update') do
   id = params[:id].to_i
-  title = params[:title]
-  artist_id = params[:ArtistId].to_i
+  name = params[:name]
   db = SQLite3::Database.new("db/db.db")
-  db.execute("UPDATE albums SET Title=?,ArtistId=? WHERE AlbumId = ? ",title,artist_id,id)
-  redirect('/albums')
+  db.execute("UPDATE recipe SET recipe_name = ? WHERE Id = ? ",name,id)
+  redirect('/')
 end
 
-get('/login') do
+get('/register') do
+    slim(:register)
+end
+
+post('/users/new') do
+    username = params[:username]
+    password = params[:password]
+    password_confirm = params[:password_confirm]
+    if (password == password_confirm)
+        password_digest = BCrypt::Password.create(password)
+        db = connect_to_db("db/db.db")
+        db.execute('INSERT INTO user (username,pwdigest) VALUES (?,?)',username,password_digest)
+        redirect('/login')
+    end
+end
+
+get('/showlogin') do
     slim(:login)
+end
+
+post('/login') do
+    username = params[:username]
+    password = params[:password]
+    db = connect_to_db("db/db.db")
+    result = db.execute('SELECT * FROM user WHERE username = ?',username).first
+    pwdigest = result["pwdigest"]
+    id = result["id"]
+
+    if BCrypt::Password.new(pwdigest) == password
+        session[:id] = id
+        redirect('/')
+    else
+        "Invalid Username or Password"
+    end
 end
