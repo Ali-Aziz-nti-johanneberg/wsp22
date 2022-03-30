@@ -19,16 +19,36 @@ get('/') do
     slim(:index,locals:{rec:recipe_name})
 end
 
+get('/showlogin') do
+    slim(:login)
+end
+
+post('/login') do
+    username = params[:username]
+    password = params[:password]
+    db = connect_to_db("db/db.db")
+    result = db.execute('SELECT * FROM user WHERE username = ?',username).first
+    pwdigest = result["pwdigest"]
+    id = result["id"]
+    if BCrypt::Password.new(pwdigest) == password && username.empty? == false
+        session[:id] = id
+        redirect('/user')
+    else
+        "Invalid Username or Password"
+    end
+end
+
 get('/recipes/new') do
     slim(:new)
 end
 
 post('/recipes') do
+    id = session[:id].to_i
     recipe_name = params[:name_recipe]
     ingrediens_list = params[:name_ingrediens]
     p "#{ingrediens_list} and #{recipe_name}"
     db = SQLite3::Database.new("db/db.db")
-    db.execute('INSERT INTO recipe (recipe_name) VALUES (?)',recipe_name)   
+    db.execute('INSERT INTO recipe (recipe_name,user_id) VALUES (?,?)',recipe_name,id)
     ingre_array = ingrediens_list.split(",")
     ingrediens_database = db.execute('SELECT ingredients_name FROM ingredients')
     i = 0
@@ -87,30 +107,32 @@ post('/users/new') do
     username = params[:username]
     password = params[:password]
     password_confirm = params[:password_confirm]
-    if (password == password_confirm)
-        password_digest = BCrypt::Password.create(password)
-        db = connect_to_db("db/db.db")
-        db.execute('INSERT INTO user (username,pwdigest) VALUES (?,?)',username,password_digest)
-        redirect('/login')
-    end
-end
-
-get('/showlogin') do
-    slim(:login)
-end
-
-post('/login') do
-    username = params[:username]
-    password = params[:password]
     db = connect_to_db("db/db.db")
-    result = db.execute('SELECT * FROM user WHERE username = ?',username).first
-    pwdigest = result["pwdigest"]
-    id = result["id"]
-
-    if BCrypt::Password.new(pwdigest) == password
-        session[:id] = id
-        redirect('/')
+    result = db.execute("SELECT username FROM user WHERE username=?",username)
+    if result.empty?
+        if (password == password_confirm)
+            password_digest = BCrypt::Password.create(password)
+            db.execute('INSERT INTO user (username,pwdigest) VALUES (?,?)',username,password_digest)
+            redirect('/showlogin')
+        else
+            "Password do not match"
+        end
+    elsif username.empty?
+        "Null"
     else
-        "Invalid Username or Password"
+        "Username already taken"
     end
+end
+
+get('/user') do
+    db = connect_to_db("db/db.db")
+    id = session[:id].to_i
+    admin = db.execute("SELECT username FROM user WHERE id = ?",id)
+    if id == 1
+        recipe_name = db.execute("SELECT * FROM recipe")
+    else
+        recipe_name = db.execute("SELECT * FROM recipe WHERE user_id = ?",id)
+    end
+    p "re är: #{recipe_name}"
+    slim(:edit_user_index,locals:{rec:recipe_name})
 end
