@@ -107,3 +107,9 @@ def all_recipe() #argument = , tabel = recipe , attribute =
     #Returns all recipes
     return result
 end
+
+def owner_id(id)
+    db = connect_to_db("db/db.db")
+    result = db.execute("SELECT user_id FROM recipe WHERE id=?",id.to_i).first
+    return result
+end

@@ -3,7 +3,7 @@
     width: 100vw;
     height: 10vh;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     text-decoration: none;
 }
 

@@ -12,6 +12,17 @@ def connect_to_db(path)
     return db
 end   
 
+def authorization(id)
+    owner = owner_id(id)
+    if owner["user_id"] != session[:id]
+        if 1 !=session[:id]
+            info = "unauthorized access"
+            session[:info] = info
+            redirect('/error')
+        end
+    end
+end
+
 get('/') do
     db = connect_to_db("db/db.db")
     recipe_name = db.execute("SELECT * FROM recipe")
@@ -51,7 +62,7 @@ post('/recipes') do
     recipe_name = params[:name_recipe]
     ingrediens_list = params[:name_ingrediens]
     p ingrediens_list.include?(",")
-    if ingrediens_list.include?(",") != false
+    if ingrediens_list.include?(",") == false
         "Seperate the ingrediens through putting -> , <--"
         "Example"
         "Potato-4st,milk-500ml"
@@ -81,18 +92,21 @@ end
 
 post('/recipes/:id/delete') do
   id = params[:id].to_i
+  authorization(id)
   delete_one_recipe(id)
   redirect('/')
 end
 
 get('/recipes/:id/edit') do
   id_now = params[:id].to_i
+  authorization(id_now)
   result = selectiv_everything(id_now,"recipe","Id")
   slim(:"edit",locals:{result:result})
 end
 
 post('/recipes/:id/update') do
   id = params[:id].to_i
+  authorization(id)
   name = params[:name]
   update_recipe(id,name)
   redirect('/')
@@ -134,7 +148,13 @@ get('/user') do
 end
 
 get('/users') do
-    user_list = every_user()
+    if session[:id] == 1
+        user_list = every_user()
+    else
+        info = "unauthorized access"
+        session[:info] = info
+        redirect('/error')
+    end
     slim(:index_admin,locals:{rec:user_list})
 end
 
@@ -142,4 +162,8 @@ post('/users/:id/delete') do
     id = params[:id].to_i
     delete_one_user(id)
     redirect('/')
+end
+
+get('/error') do
+    "#{session[:info]}"
 end
