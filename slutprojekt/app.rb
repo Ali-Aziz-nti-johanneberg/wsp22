@@ -27,10 +27,14 @@ end
 post('/login') do
     username = params[:username]
     password = params[:password]
-    user_info(username)
-    pwdigest = result["pwdigest"]
-    id = result["id"]
-    if BCrypt::Password.new(pwdigest) == password && username.empty? == false
+    result = selectiv_everything(username,"user","username")
+    if result == nil
+        pwdigest = "/n"
+    else 
+        pwdigest = result["pwdigest"]
+        id = result["id"]
+    end
+    if pwdigest != "/n" && BCrypt::Password.new(pwdigest) == password && username.empty? == false
         session[:id] = id
         redirect('/user')
     else
@@ -46,8 +50,14 @@ post('/recipes') do
     id = session[:id].to_i
     recipe_name = params[:name_recipe]
     ingrediens_list = params[:name_ingrediens]
-    p "#{ingrediens_list} and #{recipe_name}"
-    add_into_recipie(recipe_name,id)
+    p ingrediens_list.include?(",")
+    if ingrediens_list.include?(",") != false
+        "Seperate the ingrediens through putting -> , <--"
+        "Example"
+        "Potato-4st,milk-500ml"
+    else
+        p "#{ingrediens_list} and #{recipe_name}"
+    add_into_recipe(recipe_name,id)
     ingre_array = ingrediens_list.split(",")
     ingrediens_database = ingrediens_database_show()
     i = 0
@@ -59,6 +69,7 @@ post('/recipes') do
         i += 1
     end
     redirect('/')
+    end 
 end
 
 
@@ -75,8 +86,8 @@ post('/recipes/:id/delete') do
 end
 
 get('/recipes/:id/edit') do
-  id = params[:id].to_i
-  result = edit_recipe(id)
+  id_now = params[:id].to_i
+  result = selectiv_everything(id_now,"recipe","Id")
   slim(:"edit",locals:{result:result})
 end
 
@@ -112,7 +123,6 @@ post('/users/new') do
 end
 
 get('/user') do
-    db = connect_to_db("db/db.db")
     id = session[:id].to_i
     if id == 1
         recipe_name = all_recipe()
@@ -121,4 +131,15 @@ get('/user') do
     end
     p "re är: #{recipe_name}"
     slim(:edit_user_index,locals:{rec:recipe_name})
+end
+
+get('/users') do
+    user_list = every_user()
+    slim(:index_admin,locals:{rec:user_list})
+end
+
+post('/users/:id/delete') do
+    id = params[:id].to_i
+    delete_one_user(id)
+    redirect('/')
 end

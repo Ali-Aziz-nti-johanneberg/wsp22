@@ -1,12 +1,12 @@
 <h1 class="hello"> All Recipes
 
 ol
-  - rec.each do |recipe|
-    li 
-      a href="recipes/#{recipe['id']}" #{recipe["recipe_name"]}
-      a href="recipes/#{recipe['id']}/edit" Uppdatera
-      form method="POST" action="recipes/#{recipe['id']}/delete"
-        input type="submit" value="Delete"
+    - rec.each do |recipe|
+      li 
+        a href="recipes/#{recipe['id']}" #{recipe["recipe_name"]}
+        a href="recipes/#{recipe['id']}/edit" Uppdatera
+        form method="POST" action="recipes/#{recipe['id']}/delete"
+          input type="submit" value="Delete"
 
       
       

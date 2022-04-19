@@ -4,13 +4,7 @@ def connect_to_db(path)
     return db
 end   
 
-def user_info(username)
-    db = connect_to_db("db/db.db")
-    result = db.execute('SELECT * FROM user WHERE username = ?',username).first
-    return result
-end
-
-def add_into_recipie(recipe_name,id)
+def add_into_recipe(recipe_name,id)
     db = SQLite3::Database.new("db/db.db")
     db.execute('INSERT INTO recipe (recipe_name,user_id) VALUES (?,?)',recipe_name,id)
 end
@@ -46,12 +40,6 @@ def delete_one_recipe(id)
     db.execute("DELETE FROM recipe WHERE id = ?",id)
 end
 
-def edit_recipe(id)
-    db = SQLite3::Database.new("db/db.db")
-    result = db.execute("SELECT * FROM recipe WHERE Id = ?",id).first
-    return result
-end
-
 def update_recipe(id,name)
     db = SQLite3::Database.new("db/db.db")
     db.execute("UPDATE recipe SET recipe_name = ? WHERE Id = ? ",name,id)
@@ -68,15 +56,54 @@ def create_user(username,password_digest)
     db.execute('INSERT INTO user (username,pwdigest) VALUES (?,?)',username,password_digest)
 end
 
-def all_recipe()
+def every_user()
     db = connect_to_db("db/db.db")
-    result = db.execute("SELECT * FROM recipe")
+    result = db.execute("SELECT * FROM user WHERE id NOT IN (1)")
     return result
 end
 
-def all_recipe_by(id)
+
+def delete_one_user(id)
+    db = SQLite3::Database.new("db/db.db")
+    temp = db.execute("Select id FROM recipe WHERE user_id = ?",id)
+    db.execute("DELETE FROM ingredients_recipes WHERE recipe_id = ?",temp)
+    db.execute("DELETE FROM recipe WHERE user_id = ?",id)
+    db.execute("DELETE FROM user WHERE id = ?",id)
+end
+
+
+def selectiv_everything(argument,tabel,attribute)
+    db = connect_to_db("db/db.db")
+    result = db.execute("SELECT * FROM #{tabel} WHERE #{attribute} = ?",argument).first
+    #Select everything from tabel that includes a spefic attribute
+    return result
+end
+#Ifall det behövs för dry-kod
+
+
+=begin
+def user_info(username) # argument = username , tabel = user , attribute = username
+    db = connect_to_db("db/db.db")
+    result = db.execute('SELECT * FROM user WHERE username = ?',username).first
+    return result
+end
+
+def edit_recipe(id) #argument = id , tabel = recipe , attribute = Id
+    db = SQLite3::Database.new("db/db.db")
+    result = db.execute("SELECT * FROM recipe WHERE Id = ?",id).first
+    return result
+end
+=end
+def all_recipe_by(id) #argument = id , tabel = recipe , attribute = user_id
     db = connect_to_db("db/db.db")
     result = db.execute("SELECT * FROM recipe WHERE user_id = ?",id)
     return result
 end
 
+
+def all_recipe() #argument = , tabel = recipe , attribute = 
+    db = connect_to_db("db/db.db")
+    result = db.execute("SELECT * FROM recipe")
+    #Returns all recipes
+    return result
+end
