@@ -12,6 +12,9 @@ def connect_to_db(path)
     return db
 end   
 
+failed_attempt = 0
+
+
 def authorization(id)
     owner = owner_id(id)
     if owner["user_id"] != session[:id]
@@ -36,20 +39,37 @@ get('/showlogin') do
 end
 
 post('/login') do
-    username = params[:username]
-    password = params[:password]
-    result = selectiv_everything(username,"user","username")
-    if result == nil
-        pwdigest = "/n"
+    session[:time] = 0
+    if failed_attempt < 2
+        username = params[:username]
+        password = params[:password]
+        result = selectiv_everything(username,"user","username")
+        if result == nil
+            pwdigest = "/n"
+        else 
+            pwdigest = result["pwdigest"]
+            id = result["id"]
+        end
+        if pwdigest != "/n" && BCrypt::Password.new(pwdigest) == password && username.empty? == false
+            session[:id] = id
+            redirect('/user')
+        else
+            if failed_attempt < 1
+                failed_attempt += 1
+                p "#{failed_attempt} failed attempt"
+                "Invalid Username or Password"
+                redirect("showlogin")
+            else
+                failed_attempt += 1
+                session[:info] = "Unexpected spam"
+                redirect('/error')
+            end
+        end
     else 
-        pwdigest = result["pwdigest"]
-        id = result["id"]
-    end
-    if pwdigest != "/n" && BCrypt::Password.new(pwdigest) == password && username.empty? == false
-        session[:id] = id
-        redirect('/user')
-    else
-        "Invalid Username or Password"
+        sleep(15)
+        p "Done waiting"
+        failed_attempt = 0
+        redirect("showlogin")
     end
 end
 
@@ -121,7 +141,7 @@ post('/users/new') do
     password = params[:password]
     password_confirm = params[:password_confirm]
     result = select_username(username)
-    if result.empty?
+    if result.empty? && password.empty == false
         if (password == password_confirm)
             password_digest = BCrypt::Password.create(password)
             create_user(username,password_digest)
@@ -130,7 +150,7 @@ post('/users/new') do
             "Password do not match"
         end
     elsif username.empty?
-        "Null"
+        "Invalid username or password"
     else
         "Username already taken"
     end
@@ -165,5 +185,7 @@ post('/users/:id/delete') do
 end
 
 get('/error') do
+    time = Time.now
+    session[:time] = time
     "#{session[:info]}"
 end
