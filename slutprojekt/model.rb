@@ -92,7 +92,7 @@ module Model
         return result
     end
 
-    # Attempts to delete a row from the table following tables recipe, ingredients_recipe, recipe and user
+    # Attempts to delete a row from the following tables recipe, ingredients_recipe, recipe and user
     # @param [Integer] id, The users's ID
 
     def delete_one_user(id)

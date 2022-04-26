@@ -93,7 +93,6 @@ end
 #
 # @see Model#add_into_recipe
 # @see Model#ingrediens_database_show
-
 post('/recipes') do
     id = session[:id].to_i
     recipe_name = params[:name_recipe]
@@ -168,6 +167,7 @@ end
 get('/register') do
     slim(:register)
 end
+
 # Attempts to register
 #
 # @param [String] username, The username
