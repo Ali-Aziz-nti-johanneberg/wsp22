@@ -29,7 +29,6 @@ end
 
 # Display Landing Page 
 get('/') do 
-    db = connect_to_db("db/db.db")
     recipe_name = all_recipe()
     p "re är: #{recipe_name}"
     id = session[:id].to_i
@@ -179,7 +178,7 @@ post('/users/new') do
     username = params[:username].to_s
     password = params[:password].to_s
     password_confirm = params[:password_confirm]
-    result = select_username(username)
+    x§ = select_username(username)
     if username.class != String
         "Wrong input"if username.class != String
         "Wrong input"
