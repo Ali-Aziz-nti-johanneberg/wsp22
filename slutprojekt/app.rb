@@ -30,7 +30,7 @@ end
 # Display Landing Page 
 get('/') do 
     db = connect_to_db("db/db.db")
-    recipe_name = db.execute("SELECT * FROM recipe")
+    recipe_name = all_recipe()
     p "re är: #{recipe_name}"
     id = session[:id].to_i
     slim(:index,locals:{rec:recipe_name})
@@ -48,7 +48,7 @@ end
 
 post('/login') do
     session[:time] = 0
-    if failed_attempt < 2
+    if failed_attempt < 4
         username = params[:username]
         password = params[:password]
         result = selectiv_everything(username,"user","username")
@@ -58,15 +58,16 @@ post('/login') do
             pwdigest = result["pwdigest"]
             id = result["id"]
         end
-        if pwdigest != "/n" && BCrypt::Password.new(pwdigest) == password && username.empty? == false
+        if username.class != String
+            "Wrong input"
+        elsif pwdigest != "/n" && BCrypt::Password.new(pwdigest) == password && username.empty? == false
             session[:id] = id
             redirect('/user')
         else
-            if failed_attempt < 1
+            if failed_attempt < 3
                 failed_attempt += 1
                 p "#{failed_attempt} failed attempt"
                 "Invalid Username or Password"
-                redirect("showlogin")
             else
                 failed_attempt += 1
                 session[:info] = "Unexpected spam"
@@ -74,7 +75,7 @@ post('/login') do
             end
         end
     else 
-        sleep(15)
+        sleep(10)
         p "Done waiting"
         failed_attempt = 0
         redirect("showlogin")
@@ -98,10 +99,8 @@ post('/recipes') do
     recipe_name = params[:name_recipe]
     ingrediens_list = params[:name_ingrediens]
     p ingrediens_list.include?(",")
-    if ingrediens_list.include?(",") == false
-        "Seperate the ingrediens through putting -> , <--"
-        "Example"
-        "Potato-4st,milk-500ml"
+    if ingrediens_list.include?(",") == false or recipe_name.empty? 
+        "Add addional ingreidents or empty recipe"
     else
         p "#{ingrediens_list} and #{recipe_name}"
     add_into_recipe(recipe_name,id)
@@ -177,19 +176,24 @@ end
 # @see Model# select_username
 # @see Model# create_user
 post('/users/new') do
-    username = params[:username]
-    password = params[:password]
+    username = params[:username].to_s
+    password = params[:password].to_s
     password_confirm = params[:password_confirm]
     result = select_username(username)
-    if result.empty? && password.empty == false
-        if (password == password_confirm)
+    if username.class != String
+        "Wrong input"if username.class != String
+        "Wrong input"
+    elsif result.empty? && password.empty? == false
+        p "String"
+        p username.class == String
+        if (password == password_confirm) 
             password_digest = BCrypt::Password.create(password)
             create_user(username,password_digest)
             redirect('/showlogin')
         else
             "Password do not match"
         end
-    elsif username.empty?
+    elsif username.empty? or password.empty? or password_confirm.empty?
         "Invalid username or password"
     else
         "Username already taken"
